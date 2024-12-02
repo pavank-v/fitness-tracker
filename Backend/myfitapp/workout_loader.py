@@ -9,6 +9,7 @@ from .models import (
 )
 
 
+# Function to add the Resistance workouts to database
 def add_resistance_workouts():
     exercises = {
         "Beginner": {
@@ -354,6 +355,8 @@ def add_resistance_workouts():
                 )
     print("Resistance Exercises Added Successfully!!!")
 
+
+# Function to add Cardio workouts to database
 def add_cardio_workouts():
     cardio_exercises = {
         "Beginner": {
@@ -419,6 +422,7 @@ def add_cardio_workouts():
     print("Cardio Workouts Loaded Successfully")
 
 
+# Function to add crossfit workouts to database
 def add_crossfit_workouts():
     crossfit_workouts = {
         "Beginner": [
@@ -474,6 +478,7 @@ def add_crossfit_workouts():
     print("Crossfit Workouts Loaded Successfully")
 
 
+# Function to add Mobility Workouts to database
 def add_flexibility_workouts():
     flexibility_workouts = [
         {"name": "Seated Forward Bend", "duration": 60, "stretch_type": "Static"},
@@ -513,6 +518,7 @@ def add_flexibility_workouts():
     print("Flexibility workouts Loaded Successfully")
 
 
+# Function to add recovery methods
 def add_recovery_methods():
     recovery_workouts = [
         {"name": "Foam Rolling", "duration": 10, "recovery_type": "Active"},

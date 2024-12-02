@@ -1,7 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
+import logging
 
-from .scripts import calories_finder
+from myfitapp.scripts import calculate_end_date, calories_finder
 
 # Global Variables
 LEVEL_CHOICES = [
@@ -15,6 +17,8 @@ GOAL_CHOICES = [
     ("Gain", "Gain Weight"),
     ("Maintain", "Maintain Weight"),
 ]
+
+logger = logging.getLogger(__name__)
 
 
 # Model for storing user profile information
@@ -148,11 +152,15 @@ class PersonalWorkoutPlan(models.Model):
 class PersonalDietPlan(models.Model):
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
     calorie_budget = models.IntegerField()
+    protein = models.IntegerField()
+    carbs = models.IntegerField()
+    fats = models.IntegerField()
     start_date = models.DateField(auto_now_add=True)
     end_date = models.DateField(blank=True, null=True)
 
+    # Method to calculate the calorie budget for that day
     def calculate_calorie_budget(self):
-        weight = self.profile.weight
+        weight = float(self.profile.weight)
         goal = self.profile.goal
         if goal == "Lose":
             return round(weight * 2.202 * 13.5)
@@ -161,8 +169,36 @@ class PersonalDietPlan(models.Model):
         else:  # Maintain
             return round(weight * 2.202 * 15)
 
+    # Method to calculate the macro nutrients required for an user
+    def calculate_macros(self):
+        calories = self.calorie_budget
+        if self.profile.gender == "Male":
+            protein = round(calories * 0.3) // 4
+            carbs = round(calories * 0.5) // 4
+            fats = round(calories * 0.2) // 9
+        else:  # Female
+            protein = round(calories * 0.25) // 4
+            carbs = round(calories * 0.4) // 4
+            fats = round(calories * 0.35) // 9
+
+        # Adjust macros to match calorie budget
+        total_calories = (protein * 4) + (carbs * 4) + (fats * 9)
+        adjustment = (calories - total_calories) // 4
+        carbs += adjustment  # Adjust carbs as a buffer
+
+        return protein, carbs, fats
+
     def save(self, *args, **kwargs):
+        if not self.start_date:
+            self.start_date = timezone.now().date()
+        logger.debug(f"Start Date: {self.start_date}")
         self.calorie_budget = self.calculate_calorie_budget()
+        self.protein, self.carbs, self.fats = self.calculate_macros()
+        self.end_date = calculate_end_date(self.start_date)
+        """
+        TODO: figure out this -> tried self.save() with different method name
+          causing infinite recursion
+        """
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -189,8 +225,52 @@ class UserFoodLog(models.Model):
         self.protein_intake = nutrition["protein_g"]
         self.carbs_intake = nutrition["carbohydrates_total_g"]
         self.fat_intake = nutrition["fat_total_g"]
+        """
+        TODO: figure out this -> tried self.save() with different method name
+          causing infinite recursion
+        """
+        super().save(*args, **kwargs)
 
-        super().save()
+    @staticmethod
+    def daily_summary(profile):
+        """
+        this method will give a detailed summary about the food consumption
+        on the day "Tracking Calories"
+        """
+        today = timezone.now().date()
+        logs = UserFoodLog.objects.filter(profile=profile, date=today)
+
+        total_calories = sum(log.calories for log in logs)
+        total_protein = sum(log.protein_intake for log in logs)
+        total_fats = sum(log.fat_intake for log in logs)
+        total_carbs = sum(log.carbs_intake for log in logs)
+
+        try:
+            diet_plan = PersonalDietPlan.objects.get(profile=profile)
+        except PersonalDietPlan.DoesNotExist:
+            return {
+                "error": "No diet plan available for this user.",
+                "total_calories": total_calories,
+                "total_protein": total_protein,
+                "total_carbs": total_carbs,
+                "total_fats": total_fats,
+            }
+
+        remaining_calories = max(diet_plan.calorie_budget - total_calories, 0)
+        remaining_protein = max(diet_plan.protein - total_protein, 0)
+        remaining_carbs = max(diet_plan.carbs - total_carbs, 0)
+        remaining_fats = max(diet_plan.fats - total_fats, 0)
+
+        return {
+            "total_calories": total_calories,
+            "remaining_calories": remaining_calories,
+            "total_protein": total_protein,
+            "remaining_protein": remaining_protein,
+            "total_carbs": total_carbs,
+            "remaining_carbs": remaining_carbs,
+            "total_fats": total_fats,
+            "remaining_fats": remaining_fats,
+        }
 
     def __str__(self):
         return f"{self.profile.user.username} - {self.food_name} on {self.date}"
@@ -198,6 +278,11 @@ class UserFoodLog(models.Model):
 
 # Model to keep track of body metrics
 class BodyMetrics(models.Model):
+    """
+    This is the model which will be used to keep track 
+    of the user weight and goal changes
+    """
+
     profile = models.ForeignKey(
         Profile, on_delete=models.CASCADE, related_name="body_metrics"
     )

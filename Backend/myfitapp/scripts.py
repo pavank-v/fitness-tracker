@@ -1,10 +1,12 @@
 from rest_framework.exceptions import NotFound
+from datetime import timedelta
 import requests
 import json
 
 
 # Helper function to get the nutritional facts
 def nutritional_facts(food_name, quantity):
+    # TODO: Hide the api key
     api_url = "https://api.calorieninjas.com/v1/nutrition?query="
     api_key = "qH8EV4KUKeCOivfUjmiiiA==gxZC8l0UwQiztZXp"
     query = f"{quantity} grams of {food_name}"
@@ -20,6 +22,7 @@ def nutritional_facts(food_name, quantity):
 
 # Helper function to get the recipes
 def recipe_recommendation(food_name):
+    # TODO: Hide the api key
     api_url = "https://api.api-ninjas.com/v1/recipe?query="
     api_key = "qH8EV4KUKeCOivfUjmiiiA==vXSMGJEcpHRokQk3"
 
@@ -50,3 +53,8 @@ def calories_finder(food_name, quantity):
             "carbohydrates_total_g": 0,
             "fat_total_g": 0,
         }
+
+# Helper Function to calculate end date 
+# of a diet plan or workout plan
+def calculate_end_date(start_date, duration_days=30):
+    return start_date + timedelta(days=duration_days)

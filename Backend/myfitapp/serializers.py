@@ -1,20 +1,9 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import (
-    BodyMetrics,
-    CardioTraining,
-    CrossFitTraining,
-    FlexibilityTraining,
-    MuscleGroup,
-    PersonalDietPlan,
-    PersonalWorkoutPlan,
-    Profile,
-    Recovery,
-    ResistanceTraining,
-    TrainingLevel,
-    UserFoodLog,
+from myfitapp.models import (BodyMetrics, CardioTraining, CrossFitTraining,
+    FlexibilityTraining, MuscleGroup, PersonalDietPlan, PersonalWorkoutPlan,
+    Profile, Recovery, ResistanceTraining, TrainingLevel, UserFoodLog,
 )
-
 
 # Serializer for Profile
 class ProfileSerializer(serializers.ModelSerializer):
@@ -55,12 +44,14 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 
+# Serializer for certain Muscle Group
 class MuscleGroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = MuscleGroup
         fields = ["id", "name"]
 
 
+# Serializer for Training level
 class TrainingLevelSerializer(serializers.ModelSerializer):
     class Meta:
         model = TrainingLevel
@@ -84,6 +75,7 @@ class ResistanceTrainingSerializer(serializers.ModelSerializer):
         ]
 
 
+# Serializer for Cardio
 class CardioTrainingSerializer(serializers.ModelSerializer):
     current_level = TrainingLevelSerializer()
 
@@ -92,6 +84,7 @@ class CardioTrainingSerializer(serializers.ModelSerializer):
         fields = ["id", "exercise_name", "duration", "intensity", "current_level"]
 
 
+# Serializer for cardio
 class CrossFitTrainingSerializer(serializers.ModelSerializer):
     current_level = TrainingLevelSerializer()
 
@@ -100,12 +93,14 @@ class CrossFitTrainingSerializer(serializers.ModelSerializer):
         fields = ["id", "exercise_name", "rounds", "time_cap", "current_level"]
 
 
+# Serializer for flexibility
 class FlexibilityTrainingSerializer(serializers.ModelSerializer):
     class Meta:
         model = FlexibilityTraining
         fields = "__all__"
 
 
+# Serializer for Recovery
 class RecoverySerializer(serializers.ModelSerializer):
     class Meta:
         model = Recovery
@@ -134,6 +129,13 @@ class UserFoodLogSerializer(serializers.ModelSerializer):
             "fat_intake",
             "date",
         ]
+        read_only_fields = [
+            "calories",
+            "protein_intake",
+            "fat_intake",
+            "carbs_intake",
+            "date",
+        ]
 
 
 # Serializer for personal workout plan with ManyToMany relations
@@ -143,19 +145,6 @@ class PersonalWorkoutPlanSerializer(serializers.ModelSerializer):
     crossfit_trainings = CrossFitTrainingSerializer(many=True, read_only=True)
     flexibility_trainings = FlexibilityTrainingSerializer(many=True, read_only=True)
     recoveries = RecoverySerializer(many=True, read_only=True)
-
-    class Meta:
-        model = PersonalWorkoutPlan
-        fields = [
-            "profile",
-            "start_date",
-            "end_date",
-            "resistance_trainings",
-            "cardio_trainings",
-            "crossfit_trainings",
-            "flexibility_trainings",
-            "recoveries",
-        ]
 
     # Adding extra `write_only` fields for accepting input IDs during creation
     resistance_trainings_ids = serializers.PrimaryKeyRelatedField(
@@ -174,15 +163,34 @@ class PersonalWorkoutPlanSerializer(serializers.ModelSerializer):
         queryset=Recovery.objects.all(), many=True, write_only=True
     )
 
+    class Meta:
+        model = PersonalWorkoutPlan
+        fields = [
+            "profile",
+            "start_date",
+            "end_date",
+            "resistance_trainings",
+            "cardio_trainings",
+            "crossfit_trainings",
+            "flexibility_trainings",
+            "recoveries",
+            # Fields for writing IDs
+            "resistance_trainings_ids",
+            "cardio_trainings_ids",
+            "crossfit_trainings_ids",
+            "flexibility_trainings_ids",
+            "recoveries_ids",
+        ]
+
     def create(self, validated_data):
-        # Separate out the IDs to assign ManyToMany relationships
+        # Extract the IDs for ManyToMany relationships
         resistance_ids = validated_data.pop("resistance_trainings_ids", [])
         cardio_ids = validated_data.pop("cardio_trainings_ids", [])
         crossfit_ids = validated_data.pop("crossfit_trainings_ids", [])
         flexibility_ids = validated_data.pop("flexibility_trainings_ids", [])
         recovery_ids = validated_data.pop("recoveries_ids", [])
 
-        # Create the workout plan instance
+        # Create the PersonalWorkoutPlan instance
         workout_plan = PersonalWorkoutPlan.objects.create(**validated_data)
 
         # Assign the ManyToMany relationships
@@ -199,21 +207,48 @@ class PersonalWorkoutPlanSerializer(serializers.ModelSerializer):
 class PersonalDietPlanSerializer(serializers.ModelSerializer):
     class Meta:
         model = PersonalDietPlan
-        fields = ["profile", "calorie_budget", "start_date", "end_date"]
+        fields = [
+            "profile",
+            "calorie_budget",
+            "protein",
+            "carbs",
+            "fats",
+            "start_date",
+            "end_date",
+        ]
+        read_only_fields = ["calorie_budget", "protein", "carbs", "fats", "start_date"]
+
+    def validate(self, data):
+        profile = data.get("profile")
+
+        if not profile.weight or profile.weight <= 0:
+            raise serializers.ValidationError("Profile must have a valid weight.")
+        if not profile.goal:
+            raise serializers.ValidationError(
+                "Profile must have a valid goal (Lose, Gain, Maintain)."
+            )
+        if not profile.gender:
+            raise serializers.ValidationError(
+                "Profile must have a valid gender (Male or Female)."
+            )
+
+        return data
 
     def create(self, validated_data):
         profile = validated_data["profile"]
-        weight = profile.weight
-        goal = profile.goal
 
-        if goal == "Lose":
-            validated_data["calorie_budget"] = round(weight * 2.202 * 13.5)
-        elif goal == "Gain":
-            validated_data["calorie_budget"] = round(weight * 2.202 * 16)
-        elif goal == "Maintain":
-            validated_data["calorie_budget"] = round(weight * 2.202 * 15)
+        # Create an instance of the model without saving
+        diet_plan = PersonalDietPlan(profile=profile)
 
-        return super().create(validated_data)
+        # Calculate calorie budget and macros
+        diet_plan.calorie_budget = diet_plan.calculate_calorie_budget()
+        diet_plan.protein, diet_plan.carbs, diet_plan.fats = (
+            diet_plan.calculate_macros()
+        )
+
+        # Save the instance with calculated fields
+        diet_plan.save()
+        return diet_plan
 
 
 # Serializer for searching a food for nutritional information

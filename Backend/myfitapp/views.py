@@ -1,129 +1,26 @@
 from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.generics import GenericAPIView
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import ValidationError
-from rest_framework import status, mixins, generics
+from rest_framework import status
 from rest_framework.response import Response
 from django.utils import timezone
+from django.db.models import Q
 
-from myfitapp.scripts import (calculate_end_date, nutritional_facts,
-    recipe_recommendation,
-)
+from myfitapp.choices import LevelChoices
+from authentication.models import Profile
 from myfitapp.pagination import CustomPageNumberPagination
-from myfitapp.models import (BodyMetrics, CardioTraining, CrossFitTraining,
-    FlexibilityTraining, PersonalWorkoutPlan, Profile, Recovery,
-    ResistanceTraining, UserFoodLog, PersonalDietPlan,
-)
-from myfitapp.serializers import (BodyMetricsSerializer, RecipeSerializer, 
+from myfitapp.models import (CardioTraining, CrossFitTraining,
+    FlexibilityTraining, PersonalWorkoutPlan, Recovery,
+    ResistanceTraining, UserFoodLog, PersonalDietPlan,)
+from myfitapp.serializers import ( RecipeSerializer,
     CardioTrainingSerializer, CrossFitTrainingSerializer,
-    FlexibilityTrainingSerializer, SearchSerializer, RecoverySerializer,
-    PersonalWorkoutPlanSerializer,  UserSerializer, UserFoodLogSerializer,
-    ResistanceTrainingSerializer, PersonalDietPlanSerializer,
-)
-
-
-# View to Register the User
-class UserRegisterView(
-    mixins.CreateModelMixin, mixins.UpdateModelMixin, GenericAPIView
-):
-    """
-    View for user registration. This view allows unauthenticated users to
-    register by creating a new user profile.
-    """
-
-    permission_classes = [AllowAny]
-    queryset = Profile.objects.all()
-    serializer_class = UserSerializer
-
-    def get_permissions(self):
-        if self.request.method == "POST":
-            return [AllowAny()]
-        elif self.request.method in ["PUT", "PATCH"]:
-            return [IsAuthenticated()]
-        return super().get_permissions()
-
-    def create(self, request, *args, **kwargs):
-        response = super().create(request, *args, **kwargs)
-
-        response.data = {
-            "Message": "User created successfully!!!",
-            "User-ID": response.data.get("id"),
-            "Profile-data": response.data.get("profile"),
-            "Additional-info": "Thanks for signing up",
-        }
-        return response
-
-    def post(self, request, *args, **kwargs):
-        response = self.create(request, *args, **kwargs)
-        return response
-
-    def get_object(self):
-        profile, created = Profile.objects.get_or_create(user=self.request.user)
-        return profile
-
-    def put(self, request, *args, **kwargs):
-        instance = self.get_object()
-        data = request.data
-
-        allowed_fields = [
-            "age",
-            "gender",
-            "weight",
-            "height",
-            "current_level",
-            "body_fat_percentage",
-            "goal",
-        ]
-
-        for field in allowed_fields:
-            if field in data:
-                setattr(instance, field, data[field])
-
-        instance.save()
-
-        return Response(
-            {
-                "message": "Profile Updated Successfully",
-                "updated_data": {
-                    field: getattr(instance, field)
-                    for field in allowed_fields
-                    if hasattr(instance, field)
-                },
-            },
-            status=status.HTTP_200_OK,
-        )
-
-
-# View to update the body metrics of the user
-class BodyMetricsUpdateView(generics.RetrieveUpdateAPIView):
-    """
-    With this view user can update the body metrics to
-    keep track of their progress
-    """
-
-    permission_classes = [IsAuthenticated]
-    serializer_class = BodyMetricsSerializer
-
-    def get_object(self):
-        try:
-            profile = self.request.user.profile
-        except Profile.DoesNotExist:
-            return Response(
-                {"error": "Profile not found for the user."},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
-        body_metrics, created = BodyMetrics.objects.get_or_create(
-            profile=profile,
-            defaults={
-                "weight": self.request.data.get("weight", 0),
-            },
-        )
-
-        if created and not body_metrics.weight:
-            raise ValidationError("Weight is required for new entries.")
-
-        return body_metrics
+    FlexibilityTrainingSerializer, SearchSerializer,
+    RecoverySerializer, PersonalWorkoutPlanSerializer,
+    UserFoodLogSerializer, ResistanceTrainingSerializer,
+    PersonalDietPlanSerializer,)
+from myfitapp.helper import daily_summary
+from myfitapp.scripts import (calculate_end_date,
+    nutritional_facts, recipe_recommendation,)
 
 
 # View to search a food to check calories
@@ -206,27 +103,18 @@ class UserFoodLogView(APIView):
                 {"error": "Profile not found for the user."},
                 status=status.HTTP_404_NOT_FOUND,
             )
+        summary = daily_summary(profile)
 
         if input_serializer.is_valid():
             input_serializer.save(profile=profile)
 
-            daily_summary = UserFoodLog.daily_summary(profile)
-
             return Response(
                 {
-                    "message": "Food Logged Successfully",
+                    "daily_summary": summary,
                     "food-log": input_serializer.data,
-                    "daily_summary": {
-                        "total_calories": daily_summary["total_calories"],
-                        "total_protein": daily_summary["total_protein"],
-                        "total_carbs": daily_summary["total_carbs"],
-                        "total_fats": daily_summary["total_fats"],
-                        "remaining_calories": daily_summary["remaining_calories"],
-                    },
                 },
                 status=status.HTTP_201_CREATED,
             )
-
         return Response(input_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request):
@@ -242,15 +130,50 @@ class UserFoodLogView(APIView):
             profile=profile, date=timezone.now().date()
         )
         serializer = UserFoodLogSerializer(food_logs, many=True)
-        daily_summary = UserFoodLog.daily_summary(profile)
+        summary = daily_summary(profile)
 
         return Response(
             {
-                "daily_summary": daily_summary,
+                "daily_summary": summary,
                 "food-log": serializer.data,
             },
             status=status.HTTP_200_OK,
         )
+
+    def delete(self, request):
+        # Check for food_name in request data
+        food_name = request.data.get("food_name")
+        if not food_name:
+            return Response(
+                {"error": "Food name must be provided."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            profile = request.user.profile
+        except Profile.DoesNotExist:
+            return Response(
+                {"error": "Profile not found for the user."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        log_date = request.data.get("date", timezone.now().date())
+
+        try:
+            log = UserFoodLog.objects.filter(
+                profile=profile, date=log_date, food_name=food_name
+            )
+            log.delete()
+
+            return Response(
+                {"detail": f"{food_name} - deleted successfully."},
+                status=status.HTTP_200_OK,
+            )
+        except UserFoodLog.DoesNotExist:
+            return Response(
+                {"error": f"Food log for '{food_name}' not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
 
 # View to create a custom diet plan for each user
@@ -385,75 +308,68 @@ class RecoveryView(APIView):
         return paginator.get_paginated_response(serializer.data)
 
 
-# View to create a custom workout plan for each user
+# API View for managing personal workout plans.
 class PersonalWorkoutPlanView(APIView):
     """
-    This view will show the user's workout plan
+    In this view user can create their own personalized workout
+    plans and list them or delete them
     """
 
     permission_classes = [IsAuthenticated]
 
-    # get the workouts of a perticular user
-    def get(self, request):
-        try:
-            profile = Profile.objects.get(user=request.user)
-            workout_plans = PersonalWorkoutPlan.objects.filter(profile=profile)
-            serializer = PersonalWorkoutPlanSerializer(workout_plans, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        except Profile.DoesNotExist:
-            return Response(
-                {"error": "Profile not found for the user."},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
     def post(self, request):
-        serializer = PersonalWorkoutPlanSerializer(data=request.data)
+        serializer = PersonalWorkoutPlanSerializer(
+            data=request.data, context={"request": request}
+        )
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        resistance_trainings = serializer.validated_data.get(
-            "resistance_trainings_ids", []
-        )
-        cardio_trainings = serializer.validated_data.get("cardio_trainings_ids", [])
-        crossfit_trainings = serializer.validated_data.get("crossfit_training_ids", [])
-        flexibility_trainings = serializer.validated_data.get(
-            "flexibility_trainings_ids", []
-        )
-        recoveries = serializer.validated_data.get("recovery_ids", [])
-        end_date = serializer.validated_data.get("end_date")
-
         try:
-            profile = Profile.objects.get(user=request.user)
+            profile = request.user.profile
+            level = serializer.validated_data.get("level")
+            workout_type = serializer.validated_data.get("workout_type")
+            start_date = serializer.validated_data.get("start_date")
+            end_date = serializer.validated_data.get("end_date")
 
-            # Get or create the active workout plan
+            workout_mapping = {
+                "Resistance": "resistance_trainings",
+                "Cardio": "cardio_trainings",
+                "CrossFit": "crossfit_trainings",
+                "Flexibility": "flexibility_trainings",
+                "Recovery": "recoveries",
+            }
+
+            field_name = workout_mapping.get(workout_type)
+
+            existing_plan = PersonalWorkoutPlan.objects.filter(
+                profile=profile,
+                **{f"{field_name}__current_level": level},
+            ).first()
+
+            if existing_plan:
+                return Response(
+                    {
+                        "message": f"A {workout_type} workout plan for level '{level}' already exists."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
             workout_plan, created = PersonalWorkoutPlan.objects.get_or_create(
                 profile=profile,
                 end_date__isnull=True,
-                defaults={"start_date": timezone.now().date()},
+                defaults={"start_date": start_date or timezone.now().date()},
             )
 
-            # Update workouts in the plan
-            if resistance_trainings:
-                workout_plan.resistance_trainings.add(*resistance_trainings)
-            if cardio_trainings:
-                workout_plan.cardio_trainings.add(*cardio_trainings)
-            if crossfit_trainings:
-                workout_plan.crossfit_trainings.add(*crossfit_trainings)
-            if flexibility_trainings:
-                workout_plan.flexibility_trainings.add(*flexibility_trainings)
-            if recoveries:
-                workout_plan.recoveries.add(*recoveries)
+            self._assign_workouts_by_type_and_level(workout_plan, workout_type, level)
 
-            # Set or calculate the end_date
             if end_date:
                 workout_plan.end_date = end_date
-            elif created:  # Only calculate end_date for a new plan
+            elif created:
                 workout_plan.end_date = calculate_end_date(workout_plan.start_date)
 
             workout_plan.save()
-
             return Response(
-                {"message": "Workout plan created/updated successfully."},
+                {"message": "Workout plan created successfully."},
                 status=status.HTTP_201_CREATED,
             )
 
@@ -462,6 +378,108 @@ class PersonalWorkoutPlanView(APIView):
                 {"error": "Profile not found for the user."},
                 status=status.HTTP_404_NOT_FOUND,
             )
-
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    def get(self, request):
+        try:
+            # Fetch workout plans for the authenticated user
+            workout_plans = PersonalWorkoutPlan.objects.filter(
+                profile=request.user.profile
+            )
+
+            if not workout_plans:
+                return Response(
+                    {"message": "No workout plans found."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            serializer = PersonalWorkoutPlanSerializer(workout_plans, many=True)
+
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        except Profile.DoesNotExist:
+            return Response(
+                {"error": "Profile not found for the user."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+    def delete(self, request):
+
+        level = request.data.get("level")
+        workout_type = request.data.get("workout_type")
+
+        if level not in [choice[0] for choice in LevelChoices.choices]:
+            return Response(
+                {"detail": "Invalid level."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if workout_type not in [
+            "Resistance",
+            "Cardio",
+            "CrossFit",
+            "Flexibility",
+            "Recovery",
+        ]:
+            return Response(
+                {"detail": "Invalid workout type."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        workout_mapping = {
+            "Resistance": "resistance_trainings",
+            "Cardio": "cardio_trainings",
+            "CrossFit": "crossfit_trainings",
+            "Flexibility": "flexibility_trainings",
+            "Recovery": "recoveries",
+        }
+
+        field_name = workout_mapping.get(workout_type)
+
+        workout_plan = PersonalWorkoutPlan.objects.filter(profile=request.user.profile)
+
+        if workout_type in workout_mapping:
+            workout_plan = workout_plan.filter(
+                Q(**{f"{field_name}__current_level": level})
+                & ~Q(**{f"{field_name}__isnull": True})
+            )
+
+        if not workout_plan.exists():
+            return Response(
+                {"detail": f"No {workout_type} workout plans found for level {level}."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Delete the filtered workout plans
+        workout_plan.delete()
+
+        return Response(
+            {"detail": f"{workout_type} workout plan deleted successfully."},
+            status=status.HTTP_204_NO_CONTENT,
+        )
+
+    # Helper method to add workouts in personal workout plan
+    def _assign_workouts_by_type_and_level(self, workout_plan, workout_type, level):
+        workout_mapping = {
+            "Resistance": ResistanceTraining,
+            "Cardio": CardioTraining,
+            "CrossFit": CrossFitTraining,
+            "Flexibility": FlexibilityTraining,
+            "Recovery": Recovery,
+        }
+
+        if workout_type in workout_mapping:
+            workout_model = workout_mapping[workout_type]
+            workouts = workout_model.objects.filter(current_level=level)
+
+            if workout_type == "Resistance":
+                workout_plan.resistance_trainings.set(workouts)
+            elif workout_type == "Cardio":
+                workout_plan.cardio_trainings.set(workouts)
+            elif workout_type == "CrossFit":
+                workout_plan.crossfit_trainings.set(workouts)
+            elif workout_type == "Flexibility":
+                workout_plan.flexibility_trainings.set(workouts)
+            elif workout_type == "Recovery":
+                workout_plan.recoveries.set(workouts)
+        else:
+            raise ValueError(f"Invalid workout type: {workout_type}")

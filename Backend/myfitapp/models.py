@@ -1,44 +1,12 @@
 from django.db import models
-from django.contrib.auth.models import User
 from django.utils import timezone
 import logging
 
 from myfitapp.scripts import calculate_end_date, calories_finder
-
-# Global Variables
-LEVEL_CHOICES = [
-    ("Beginner", "Beginner"),
-    ("Intermediate", "Intermediate"),
-    ("Advance", "Advance"),
-]
-GENDER_CHOICES = [("M", "Male"), ("F", "Female")]
-GOAL_CHOICES = [
-    ("Lose", "Lose Weight"),
-    ("Gain", "Gain Weight"),
-    ("Maintain", "Maintain Weight"),
-]
+from myfitapp.choices import GoalChoices, GenderChoices, LevelChoices
+from authentication.models import Profile
 
 logger = logging.getLogger(__name__)
-
-
-# Model for storing user profile information
-class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
-    age = models.PositiveIntegerField(null=True, blank=True)
-    gender = models.CharField(max_length=1, choices=GENDER_CHOICES)
-    weight = models.DecimalField(max_digits=5, decimal_places=2)  # in kg
-    height = models.DecimalField(
-        max_digits=5, decimal_places=2, null=True, blank=True
-    )  # in cm
-    current_level = models.CharField(max_length=20, choices=LEVEL_CHOICES)
-    body_fat_percentage = models.DecimalField(
-        max_digits=4, decimal_places=1, null=True, blank=True
-    )
-    goal = models.CharField(max_length=10, choices=GOAL_CHOICES)
-
-    def __str__(self):
-        return self.user.username
-
 
 # Muscle Group Model
 class MuscleGroup(models.Model):
@@ -46,14 +14,6 @@ class MuscleGroup(models.Model):
 
     def __str__(self):
         return self.name
-
-
-# Current Fitness Level Model
-class TrainingLevel(models.Model):
-    current_level = models.CharField(max_length=20, choices=LEVEL_CHOICES)
-
-    def __str__(self):
-        return self.current_level
 
 
 # Resistance Training Model
@@ -65,9 +25,7 @@ class ResistanceTraining(models.Model):
     muscle_group = models.ForeignKey(
         MuscleGroup, on_delete=models.CASCADE, related_name="resistance"
     )
-    current_level = models.ForeignKey(
-        TrainingLevel, on_delete=models.CASCADE, related_name="resistance"
-    )
+    current_level = models.CharField(max_length=20, choices=LevelChoices.choices)
 
     def __str__(self):
         return f"{self.exercise_name} - Sets: {self.sets}, Reps: {self.reps}"
@@ -81,9 +39,7 @@ class CardioTraining(models.Model):
         max_length=20,
         choices=[("Low", "Low"), ("Moderate", "Moderate"), ("High", "High")],
     )
-    current_level = models.ForeignKey(
-        TrainingLevel, on_delete=models.CASCADE, related_name="cardio"
-    )
+    current_level = models.CharField(max_length=20, choices=LevelChoices.choices)
 
     def __str__(self):
         return f"{self.exercise_name} - Duration: {self.duration} mins, Intensity: {self.intensity}"
@@ -94,9 +50,7 @@ class CrossFitTraining(models.Model):
     exercise_name = models.CharField(max_length=50)
     rounds = models.PositiveIntegerField()
     time_cap = models.PositiveIntegerField(null=True, blank=True)  # in minutes
-    current_level = models.ForeignKey(
-        TrainingLevel, on_delete=models.CASCADE, related_name="crossfit"
-    )
+    current_level = models.CharField(max_length=20, choices=LevelChoices.choices)
 
     def __str__(self):
         return f"{self.exercise_name} - Rounds: {self.rounds}"
@@ -109,6 +63,7 @@ class FlexibilityTraining(models.Model):
     stretch_type = models.CharField(
         max_length=20, choices=[("Static", "Static"), ("Dynamic", "Dynamic")]
     )
+    current_level = models.CharField(max_length=20, choices=LevelChoices.choices, null=True)
 
     def __str__(self):
         return f"{self.exercise_name} - {self.stretch_type} Stretch"
@@ -126,6 +81,7 @@ class Recovery(models.Model):
             ("Psychological", "Psychological"),
         ],
     )
+    current_level = models.CharField(max_length=20, choices=LevelChoices.choices, null=True)
 
     def __str__(self):
         return f"{self.method_name} - {self.recovery_type} Recovery"
@@ -162,9 +118,9 @@ class PersonalDietPlan(models.Model):
     def calculate_calorie_budget(self):
         weight = float(self.profile.weight)
         goal = self.profile.goal
-        if goal == "Lose":
+        if goal == GoalChoices.LOSE:
             return round(weight * 2.202 * 13.5)
-        elif goal == "Gain":
+        elif goal == GoalChoices.GAIN:
             return round(weight * 2.202 * 16)
         else:  # Maintain
             return round(weight * 2.202 * 15)
@@ -172,7 +128,7 @@ class PersonalDietPlan(models.Model):
     # Method to calculate the macro nutrients required for an user
     def calculate_macros(self):
         calories = self.calorie_budget
-        if self.profile.gender == "Male":
+        if self.profile.gender == GenderChoices.MALE:
             protein = round(calories * 0.3) // 4
             carbs = round(calories * 0.5) // 4
             fats = round(calories * 0.2) // 9
@@ -195,10 +151,7 @@ class PersonalDietPlan(models.Model):
         self.calorie_budget = self.calculate_calorie_budget()
         self.protein, self.carbs, self.fats = self.calculate_macros()
         self.end_date = calculate_end_date(self.start_date)
-        """
-        TODO: figure out this -> tried self.save() with different method name
-          causing infinite recursion
-        """
+        
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -225,72 +178,5 @@ class UserFoodLog(models.Model):
         self.protein_intake = nutrition["protein_g"]
         self.carbs_intake = nutrition["carbohydrates_total_g"]
         self.fat_intake = nutrition["fat_total_g"]
-        """
-        TODO: figure out this -> tried self.save() with different method name
-          causing infinite recursion
-        """
+       
         super().save(*args, **kwargs)
-
-    @staticmethod
-    def daily_summary(profile):
-        """
-        this method will give a detailed summary about the food consumption
-        on the day "Tracking Calories"
-        """
-        today = timezone.now().date()
-        logs = UserFoodLog.objects.filter(profile=profile, date=today)
-
-        total_calories = sum(log.calories for log in logs)
-        total_protein = sum(log.protein_intake for log in logs)
-        total_fats = sum(log.fat_intake for log in logs)
-        total_carbs = sum(log.carbs_intake for log in logs)
-
-        try:
-            diet_plan = PersonalDietPlan.objects.get(profile=profile)
-        except PersonalDietPlan.DoesNotExist:
-            return {
-                "error": "No diet plan available for this user.",
-                "total_calories": total_calories,
-                "total_protein": total_protein,
-                "total_carbs": total_carbs,
-                "total_fats": total_fats,
-            }
-
-        remaining_calories = max(diet_plan.calorie_budget - total_calories, 0)
-        remaining_protein = max(diet_plan.protein - total_protein, 0)
-        remaining_carbs = max(diet_plan.carbs - total_carbs, 0)
-        remaining_fats = max(diet_plan.fats - total_fats, 0)
-
-        return {
-            "total_calories": total_calories,
-            "remaining_calories": remaining_calories,
-            "total_protein": total_protein,
-            "remaining_protein": remaining_protein,
-            "total_carbs": total_carbs,
-            "remaining_carbs": remaining_carbs,
-            "total_fats": total_fats,
-            "remaining_fats": remaining_fats,
-        }
-
-    def __str__(self):
-        return f"{self.profile.user.username} - {self.food_name} on {self.date}"
-
-
-# Model to keep track of body metrics
-class BodyMetrics(models.Model):
-    """
-    This is the model which will be used to keep track 
-    of the user weight and goal changes
-    """
-
-    profile = models.ForeignKey(
-        Profile, on_delete=models.CASCADE, related_name="body_metrics"
-    )
-    date = models.DateField(auto_now_add=True)
-    weight = models.DecimalField(max_digits=5, decimal_places=2)  # in kg
-    body_fat_percentage = models.DecimalField(
-        max_digits=4, decimal_places=1, null=True, blank=True
-    )
-
-    def __str__(self):
-        return f"{self.profile.user.username} - {self.date}"

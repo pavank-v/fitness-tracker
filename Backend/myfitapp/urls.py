@@ -1,16 +1,13 @@
 from django.urls import path
 
-from myfitapp.views import (BodyMetricsUpdateView, CardioTrainingView,
+from myfitapp.views import (CardioTrainingView, SearchRecipe,
     CrossFitTrainingView, FlexibilityTrainingView, UserFoodLogView,
     ListFoodsView, PersonalDietPlanView, PersonalWorkoutPlanView,
     RecoveryView, ResistanceTrainingView, SearchFoodView,
-    SearchRecipe,
+
 )
 
 urlpatterns = [
-    # Endpoint for updating the Body Metrics
-    path("update/", BodyMetricsUpdateView.as_view(), name="update"),
-
     # Endpoints for Food Logging and listing
     path("food-log/", UserFoodLogView.as_view(), name="food-log"),
     path("list-foods/", ListFoodsView.as_view(), name="list_foods"),

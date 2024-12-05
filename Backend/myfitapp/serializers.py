@@ -1,47 +1,17 @@
 from rest_framework import serializers
-from django.contrib.auth.models import User
-from myfitapp.models import (BodyMetrics, CardioTraining, CrossFitTraining,
-    FlexibilityTraining, MuscleGroup, PersonalDietPlan, PersonalWorkoutPlan,
-    Profile, Recovery, ResistanceTraining, TrainingLevel, UserFoodLog,
+
+from myfitapp.choices import LevelChoices
+from myfitapp.models import (
+    CardioTraining,
+    CrossFitTraining,
+    UserFoodLog,
+    FlexibilityTraining,
+    MuscleGroup,
+    PersonalDietPlan,
+    PersonalWorkoutPlan,
+    Recovery,
+    ResistanceTraining,
 )
-
-# Serializer for Profile
-class ProfileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Profile
-        fields = "__all__"
-        extra_kwargs = {"user": {"read_only": True}}
-
-
-# Serializer for User details
-class UserSerializer(serializers.ModelSerializer):
-    profile = ProfileSerializer(required=True)
-
-    class Meta:
-        model = User
-        fields = [
-            "id",
-            "username",
-            "email",
-            "password",
-            "first_name",
-            "last_name",
-            "profile",
-        ]
-        extra_kwargs = {
-            "password": {"write_only": True},  # Make password write-only
-        }
-
-    def create(self, validated_data):
-        profile_data = validated_data.pop("profile", None)
-        password = validated_data.pop("password")
-        user = User.objects.create_user(**validated_data)
-        user.set_password(password)
-        user.save()
-
-        if profile_data:
-            Profile.objects.create(user=user, **profile_data)
-        return user
 
 
 # Serializer for certain Muscle Group
@@ -51,17 +21,9 @@ class MuscleGroupSerializer(serializers.ModelSerializer):
         fields = ["id", "name"]
 
 
-# Serializer for Training level
-class TrainingLevelSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = TrainingLevel
-        fields = ["id", "current_level"]
-
-
 # Serializers for Workouts and Physical activities
 class ResistanceTrainingSerializer(serializers.ModelSerializer):
     muscle_group = MuscleGroupSerializer()
-    current_level = TrainingLevelSerializer()
 
     class Meta:
         model = ResistanceTraining
@@ -77,7 +39,6 @@ class ResistanceTrainingSerializer(serializers.ModelSerializer):
 
 # Serializer for Cardio
 class CardioTrainingSerializer(serializers.ModelSerializer):
-    current_level = TrainingLevelSerializer()
 
     class Meta:
         model = CardioTraining
@@ -86,7 +47,6 @@ class CardioTrainingSerializer(serializers.ModelSerializer):
 
 # Serializer for cardio
 class CrossFitTrainingSerializer(serializers.ModelSerializer):
-    current_level = TrainingLevelSerializer()
 
     class Meta:
         model = CrossFitTraining
@@ -105,14 +65,6 @@ class RecoverySerializer(serializers.ModelSerializer):
     class Meta:
         model = Recovery
         fields = "__all__"
-
-
-# Serializer for updating body metrics
-class BodyMetricsSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = BodyMetrics
-        fields = ["weight", "date", "profile"]
-        read_only_fields = ["profile"]
 
 
 # Serializer to log food
@@ -138,30 +90,30 @@ class UserFoodLogSerializer(serializers.ModelSerializer):
         ]
 
 
-# Serializer for personal workout plan with ManyToMany relations
+# Serializer for personal workouts
 class PersonalWorkoutPlanSerializer(serializers.ModelSerializer):
+    level = serializers.ChoiceField(
+        choices=LevelChoices.choices,
+        write_only=True,
+        help_text="Specify the level of workouts (Beginner, Intermediate, Advanced)",
+    )
+    workout_type = serializers.ChoiceField(
+        choices=[
+            ("Resistance", "Resistance"),
+            ("Cardio", "Cardio"),
+            ("CrossFit", "CrossFit"),
+            ("Flexibility", "Flexibility"),
+            ("Recovery", "Recovery"),
+        ],
+        write_only=True,
+        help_text="Specify the type of workout to include in the plan",
+    )
+
+    crossfit_trainings = CrossFitTrainingSerializer(many=True, read_only=True)
     resistance_trainings = ResistanceTrainingSerializer(many=True, read_only=True)
     cardio_trainings = CardioTrainingSerializer(many=True, read_only=True)
-    crossfit_trainings = CrossFitTrainingSerializer(many=True, read_only=True)
     flexibility_trainings = FlexibilityTrainingSerializer(many=True, read_only=True)
     recoveries = RecoverySerializer(many=True, read_only=True)
-
-    # Adding extra `write_only` fields for accepting input IDs during creation
-    resistance_trainings_ids = serializers.PrimaryKeyRelatedField(
-        queryset=ResistanceTraining.objects.all(), many=True, write_only=True
-    )
-    cardio_trainings_ids = serializers.PrimaryKeyRelatedField(
-        queryset=CardioTraining.objects.all(), many=True, write_only=True
-    )
-    crossfit_trainings_ids = serializers.PrimaryKeyRelatedField(
-        queryset=CrossFitTraining.objects.all(), many=True, write_only=True
-    )
-    flexibility_trainings_ids = serializers.PrimaryKeyRelatedField(
-        queryset=FlexibilityTraining.objects.all(), many=True, write_only=True
-    )
-    recoveries_ids = serializers.PrimaryKeyRelatedField(
-        queryset=Recovery.objects.all(), many=True, write_only=True
-    )
 
     class Meta:
         model = PersonalWorkoutPlan
@@ -169,38 +121,67 @@ class PersonalWorkoutPlanSerializer(serializers.ModelSerializer):
             "profile",
             "start_date",
             "end_date",
+            "level",
+            "workout_type",
             "resistance_trainings",
             "cardio_trainings",
             "crossfit_trainings",
             "flexibility_trainings",
             "recoveries",
-            # Fields for writing IDs
-            "resistance_trainings_ids",
-            "cardio_trainings_ids",
-            "crossfit_trainings_ids",
-            "flexibility_trainings_ids",
-            "recoveries_ids",
         ]
+        extra_kwargs = {
+            "profile": {"read_only": True},
+            "start_date": {"required": False},
+            "end_date": {"required": False},
+        }
 
     def create(self, validated_data):
-        # Extract the IDs for ManyToMany relationships
-        resistance_ids = validated_data.pop("resistance_trainings_ids", [])
-        cardio_ids = validated_data.pop("cardio_trainings_ids", [])
-        crossfit_ids = validated_data.pop("crossfit_trainings_ids", [])
-        flexibility_ids = validated_data.pop("flexibility_trainings_ids", [])
-        recovery_ids = validated_data.pop("recoveries_ids", [])
+        level = validated_data.pop("level")
+        workout_type = validated_data.pop("workout_type")
 
-        # Create the PersonalWorkoutPlan instance
+        validated_data["profile"] = self.context["request"].user.profile
+
         workout_plan = PersonalWorkoutPlan.objects.create(**validated_data)
 
-        # Assign the ManyToMany relationships
-        workout_plan.resistance_trainings.set(resistance_ids)
-        workout_plan.cardio_trainings.set(cardio_ids)
-        workout_plan.crossfit_trainings.set(crossfit_ids)
-        workout_plan.flexibility_trainings.set(flexibility_ids)
-        workout_plan.recoveries.set(recovery_ids)
+        workout_mapping = {
+            "Resistance": ("resistance_trainings", ResistanceTraining.objects.filter(current_level=level)),
+            "Cardio": ("cardio_trainings", CardioTraining.objects.filter(current_level=level)),
+            "CrossFit": ("crossfit_trainings", CrossFitTraining.objects.filter(current_level=level)),
+            "Flexibility": ("flexibility_trainings", FlexibilityTraining.objects.filter(current_level=level)),
+            "Recovery": ("recoveries", Recovery.objects.filter(current_level=level)),
+        }
+
+        field_name, workouts = workout_mapping.get(workout_type, (None, None))
+
+        if workouts.exists():
+            existing_workouts = getattr(workout_plan, field_name).all()
+            new_workouts = workouts.exclude(id__in=existing_workouts.values_list("id", flat=True))
+
+            getattr(workout_plan, field_name).set(new_workouts)
+        else:
+            raise serializers.ValidationError(
+                f"No {workout_type} workouts found for level {level}."
+            )
 
         return workout_plan
+
+    def to_representation(self, instance):
+
+        data = super().to_representation(instance)
+        workout_fields = [
+            "resistance_trainings",
+            "cardio_trainings",
+            "crossfit_trainings",
+            "flexibility_trainings",
+            "recoveries",
+        ]
+
+        # Remove empty workout fields from the representation
+        for field in workout_fields:
+            if not data.get(field):
+                data.pop(field)
+
+        return data
 
 
 # Serializer for personal diet plan

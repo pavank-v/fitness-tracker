@@ -2,13 +2,14 @@ from rest_framework.exceptions import NotFound
 from datetime import timedelta
 import requests
 import json
+import os
 
 
 # Helper function to get the nutritional facts
 def nutritional_facts(food_name, quantity):
-    # TODO: Hide the api key
     api_url = "https://api.calorieninjas.com/v1/nutrition?query="
-    api_key = "qH8EV4KUKeCOivfUjmiiiA==gxZC8l0UwQiztZXp"
+    api_key = os.environ.get('CALORIE_NINJA_API')
+
     query = f"{quantity} grams of {food_name}"
 
     response = requests.get(api_url + query, headers={"X-Api-Key": api_key})
@@ -22,9 +23,8 @@ def nutritional_facts(food_name, quantity):
 
 # Helper function to get the recipes
 def recipe_recommendation(food_name):
-    # TODO: Hide the api key
     api_url = "https://api.api-ninjas.com/v1/recipe?query="
-    api_key = "qH8EV4KUKeCOivfUjmiiiA==vXSMGJEcpHRokQk3"
+    api_key = os.environ.get('API_NINJA')
 
     response = requests.get(api_url + food_name, headers={"X-Api-Key": api_key})
 
@@ -38,7 +38,7 @@ def recipe_recommendation(food_name):
 # Helper function to return the calories of a specified food
 def calories_finder(food_name, quantity):
     api_url = "https://api.calorieninjas.com/v1/nutrition?query="
-    api_key = "qH8EV4KUKeCOivfUjmiiiA==gxZC8l0UwQiztZXp"
+    api_key = os.environ.get('CALORIE_NINJA_API')
     query = f"{quantity} grams of {food_name}"
 
     response = requests.get(api_url + query, headers={"X-Api-Key": api_key})
@@ -54,7 +54,8 @@ def calories_finder(food_name, quantity):
             "fat_total_g": 0,
         }
 
-# Helper Function to calculate end date 
+
+# Helper Function to calculate end date
 # of a diet plan or workout plan
 def calculate_end_date(start_date, duration_days=30):
     return start_date + timedelta(days=duration_days)

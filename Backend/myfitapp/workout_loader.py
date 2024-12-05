@@ -1,11 +1,23 @@
-from .models import (
+import os
+import sys
+import django
+
+# Add the project root directory to the Python path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+# Set the Django settings module
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'base.settings')
+
+# Initialize Django
+django.setup()
+
+from myfitapp.models import (
     CardioTraining,
     CrossFitTraining,
     FlexibilityTraining,
     MuscleGroup,
     Recovery,
     ResistanceTraining,
-    TrainingLevel,
 )
 
 
@@ -234,7 +246,7 @@ def add_resistance_workouts():
                 },
             ],
         },
-        "Advanced": {
+        "Advance": {
             "Chest": [
                 {
                     "name": "Barbell Bench Press",
@@ -339,8 +351,7 @@ def add_resistance_workouts():
     }
 
     for level_name, muscle_group in exercises.items():
-        level, _ = TrainingLevel.objects.get_or_create(current_level=level_name)
-
+        
         for muscle_group_name, exercises_list in muscle_group.items():
             muscle_group, _ = MuscleGroup.objects.get_or_create(name=muscle_group_name)
 
@@ -351,7 +362,7 @@ def add_resistance_workouts():
                     reps=exercise["reps"],
                     weight=exercise["weight"],
                     muscle_group=muscle_group,
-                    current_level=level,
+                    current_level=level_name,
                 )
     print("Resistance Exercises Added Successfully!!!")
 
@@ -387,7 +398,7 @@ def add_cardio_workouts():
                 {"name": "Mountain Climbers", "duration": 15, "intensity": "High"},
             ],
         },
-        "Advanced": {
+        "Advance": {
             "Treadmill": [
                 {"name": "Sprinting Intervals", "duration": 30, "intensity": "High"},
                 {"name": "Incline Running", "duration": 25, "intensity": "High"},
@@ -408,15 +419,13 @@ def add_cardio_workouts():
     }
 
     for level_name, categories in cardio_exercises.items():
-        level, _ = TrainingLevel.objects.get_or_create(current_level=level_name)
-
         for category_name, exercises in categories.items():
             for exercise in exercises:
                 CardioTraining.objects.create(
                     exercise_name=exercise["name"],
                     duration=exercise["duration"],
                     intensity=exercise["intensity"],
-                    current_level=level,
+                    current_level=level_name,
                 )
 
     print("Cardio Workouts Loaded Successfully")
@@ -445,7 +454,7 @@ def add_crossfit_workouts():
                 "time_cap": 18,
             },
         ],
-        "Advanced": [
+        "Advance": [
             {"name": "Snatches and Muscle-Ups", "round": 6, "time_cap": 20},
             {"name": "Clean and Jerks with Double Unders", "round": 5, "time_cap": 18},
             {"name": "Thrusters and Chest-to-Bar Pull-Ups", "round": 5, "time_cap": 20},
@@ -465,100 +474,102 @@ def add_crossfit_workouts():
     }
 
     for level_name, exercises_list in crossfit_workouts.items():
-        level, _ = TrainingLevel.objects.get_or_create(current_level=level_name)
-
         for exercise in exercises_list:
             CrossFitTraining.objects.create(
                 exercise_name=exercise["name"],
                 rounds=exercise["round"],
                 time_cap=exercise["time_cap"],
-                current_level=level,
+                current_level=level_name,
             )
 
     print("Crossfit Workouts Loaded Successfully")
 
 
-# Function to add Mobility Workouts to database
+# Function to add Flexibility Workouts to database
 def add_flexibility_workouts():
-    flexibility_workouts = [
-        {"name": "Seated Forward Bend", "duration": 60, "stretch_type": "Static"},
-        {"name": "Cat-Cow Stretch", "duration": 30, "stretch_type": "Dynamic"},
-        {
-            "name": "Standing Hamstring Stretch",
-            "duration": 60,
-            "stretch_type": "Static",
-        },
-        {"name": "Side Lunge Stretch", "duration": 30, "stretch_type": "Dynamic"},
-        {"name": "Butterfly Stretch", "duration": 60, "stretch_type": "Static"},
-        {"name": "Thread the Needle", "duration": 45, "stretch_type": "Static"},
-        {"name": "Hip Flexor Stretch", "duration": 60, "stretch_type": "Static"},
-        {
-            "name": "Arm Cross Shoulder Stretch",
-            "duration": 30,
-            "stretch_type": "Static",
-        },
-        {"name": "Dynamic Torso Twists", "duration": 30, "stretch_type": "Dynamic"},
-        {"name": "Child's Pose", "duration": 60, "stretch_type": "Static"},
-        {"name": "Chest Opener Stretch", "duration": 60, "stretch_type": "Static"},
-        {"name": "Ankle Circles", "duration": 30, "stretch_type": "Dynamic"},
-        {"name": "Wrist Circles", "duration": 30, "stretch_type": "Dynamic"},
-        {"name": "Neck Side Stretch", "duration": 30, "stretch_type": "Static"},
-        {"name": "Cobra Stretch", "duration": 60, "stretch_type": "Static"},
-        {"name": "World's Greatest Stretch", "duration": 45, "stretch_type": "Dynamic"},
-        {"name": "Spinal Twists", "duration": 45, "stretch_type": "Static"},
-    ]
+    flexibility_workouts = {
+        "Beginner": [
+            {"name": "Seated Forward Bend", "duration": 60, "stretch_type": "Static"},
+            {"name": "Cat-Cow Stretch", "duration": 30, "stretch_type": "Dynamic"},
+            {"name": "Standing Hamstring Stretch", "duration": 60, "stretch_type": "Static"},
+            {"name": "Side Neck Stretch", "duration": 30, "stretch_type": "Static"},
+            {"name": "Ankle Circles", "duration": 30, "stretch_type": "Dynamic"},
+            {"name": "Child's Pose", "duration": 60, "stretch_type": "Static"},
+        ],
+        "Intermediate": [
+            {"name": "Side Lunge Stretch", "duration": 30, "stretch_type": "Dynamic"},
+            {"name": "Butterfly Stretch", "duration": 60, "stretch_type": "Static"},
+            {"name": "Thread the Needle", "duration": 45, "stretch_type": "Static"},
+            {"name": "Dynamic Torso Twists", "duration": 30, "stretch_type": "Dynamic"},
+            {"name": "Hip Flexor Stretch", "duration": 60, "stretch_type": "Static"},
+            {"name": "Chest Opener Stretch", "duration": 60, "stretch_type": "Static"},
+        ],
+        "Advanced": [
+            {"name": "World's Greatest Stretch", "duration": 45, "stretch_type": "Dynamic"},
+            {"name": "Spinal Twists", "duration": 45, "stretch_type": "Static"},
+            {"name": "Cobra Stretch", "duration": 60, "stretch_type": "Static"},
+            {"name": "Wrist Circles", "duration": 30, "stretch_type": "Dynamic"},
+            {"name": "Hamstring PNF Stretch", "duration": 60, "stretch_type": "Static"},
+            {"name": "Standing Quad Stretch", "duration": 60, "stretch_type": "Static"},
+            {"name": "Overhead Shoulder Stretch", "duration": 45, "stretch_type": "Static"},
+        ],
+    }
 
-    for stretch_list in flexibility_workouts:
-        FlexibilityTraining.objects.create(
-            exercise_name=stretch_list["name"],
-            duration=stretch_list["duration"],
-            stretch_type=stretch_list["stretch_type"],
-        )
+    for level, stretches_list in flexibility_workouts.items():
+        for stretch in stretches_list:
+            FlexibilityTraining.objects.create(
+                exercise_name=stretch["name"],
+                duration=stretch["duration"],
+                stretch_type=stretch["stretch_type"],
+                current_level=level, 
+            )
 
-    print("Flexibility workouts Loaded Successfully")
+    print("Flexibility Workouts Loaded Successfully")
 
-
-# Function to add recovery methods
+# Function to add Recovery Workouts to database
 def add_recovery_methods():
-    recovery_workouts = [
-        {"name": "Foam Rolling", "duration": 10, "recovery_type": "Active"},
-        {"name": "Massage Therapy", "duration": 30, "recovery_type": "Passive"},
-        {"name": "Yoga Nidra", "duration": 20, "recovery_type": "Psychological"},
-        {"name": "Cold Water Immersion", "duration": 15, "recovery_type": "Passive"},
-        {"name": "Active Stretching", "duration": 10, "recovery_type": "Active"},
-        {
-            "name": "Progressive Muscle Relaxation",
-            "duration": 20,
-            "recovery_type": "Psychological",
-        },
-        {
-            "name": "Breathing Exercises",
-            "duration": 5,
-            "recovery_type": "Psychological",
-        },
-        {"name": "Meditation", "duration": 15, "recovery_type": "Psychological"},
-        {"name": "Contrast Showers", "duration": 10, "recovery_type": "Passive"},
-        {"name": "Walking", "duration": 20, "recovery_type": "Active"},
-        {"name": "Hot Tub Soak", "duration": 15, "recovery_type": "Passive"},
-        {
-            "name": "Sleep Optimization",
-            "duration": 480,
-            "recovery_type": "Psychological",
-        },
-        {"name": "Hydration Breaks", "duration": 5, "recovery_type": "Passive"},
-        {"name": "Gentle Cycling", "duration": 15, "recovery_type": "Active"},
-        {
-            "name": "Mindfulness Journaling",
-            "duration": 10,
-            "recovery_type": "Psychological",
-        },
-    ]
+    recovery_workouts = {
+        "Beginner": [
+            {"name": "Foam Rolling", "duration": 10, "recovery_type": "Active"},
+            {"name": "Massage Therapy", "duration": 30, "recovery_type": "Passive"},
+            {"name": "Hydration Breaks", "duration": 5, "recovery_type": "Passive"},
+            {"name": "Gentle Stretching", "duration": 10, "recovery_type": "Active"},
+            {"name": "Breathing Exercises", "duration": 5, "recovery_type": "Psychological"},
+            {"name": "Progressive Muscle Relaxation", "duration": 15, "recovery_type": "Psychological"},
+        ],
+        "Intermediate": [
+            {"name": "Yoga Nidra", "duration": 20, "recovery_type": "Psychological"},
+            {"name": "Cold Water Immersion", "duration": 15, "recovery_type": "Passive"},
+            {"name": "Contrast Showers", "duration": 10, "recovery_type": "Passive"},
+            {"name": "Active Stretching", "duration": 10, "recovery_type": "Active"},
+            {"name": "Gentle Cycling", "duration": 15, "recovery_type": "Active"},
+            {"name": "Mindfulness Journaling", "duration": 10, "recovery_type": "Psychological"},
+        ],
+        "Advanced": [
+            {"name": "Hot Tub Soak", "duration": 15, "recovery_type": "Passive"},
+            {"name": "Deep Tissue Massage", "duration": 30, "recovery_type": "Passive"},
+            {"name": "Meditation", "duration": 15, "recovery_type": "Psychological"},
+            {"name": "High-Intensity Foam Rolling", "duration": 10, "recovery_type": "Active"},
+            {"name": "Sleep Optimization", "duration": 480, "recovery_type": "Psychological"},
+            {"name": "Sprint Intervals for Recovery", "duration": 5, "recovery_type": "Active"},
+            {"name": "Guided Visualization", "duration": 15, "recovery_type": "Psychological"},
+        ],
+    }
 
-    for recovery_list in recovery_workouts:
-        Recovery.objects.create(
-            method_name=recovery_list["name"],
-            duration=recovery_list["duration"],
-            recovery_type=recovery_list["recovery_type"],
-        )
+    for level, recovery_list in recovery_workouts.items():
+        for recovery in recovery_list:
+            Recovery.objects.create(
+                method_name=recovery["name"],
+                duration=recovery["duration"],
+                recovery_type=recovery["recovery_type"],
+                current_level=level,  
+            )
 
     print("Recovery Methods Loaded Successfully")
+
+
+add_resistance_workouts()
+add_cardio_workouts()
+add_recovery_methods()
+add_crossfit_workouts()
+add_flexibility_workouts()

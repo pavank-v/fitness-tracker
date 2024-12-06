@@ -5,6 +5,7 @@ import logging
 from myfitapp.scripts import calculate_end_date, calories_finder
 from myfitapp.choices import GoalChoices, GenderChoices, LevelChoices
 from authentication.models import Profile
+from rest_framework.exceptions import ValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -173,10 +174,15 @@ class UserFoodLog(models.Model):
 
     def save(self, *args, **kwargs):  # Overriding the save()
         nutrition = calories_finder(self.food_name, self.quantity)
-
-        self.calories = nutrition["calories"]
-        self.protein_intake = nutrition["protein_g"]
-        self.carbs_intake = nutrition["carbohydrates_total_g"]
-        self.fat_intake = nutrition["fat_total_g"]
-       
+        try:
+            self.calories = nutrition["calories"]
+            self.protein_intake = nutrition["protein_g"]
+            self.carbs_intake = nutrition["carbohydrates_total_g"]
+            self.fat_intake = nutrition["fat_total_g"]
+        except Exception as e:
+            raise ValidationError(detail="nutritional info cannot be obtained")
+        
         super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.food_name} - {self.quantity}g"

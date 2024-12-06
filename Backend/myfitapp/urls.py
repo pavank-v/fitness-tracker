@@ -9,7 +9,7 @@ from myfitapp.views import (CardioTrainingView, SearchRecipe,
 
 urlpatterns = [
     # Endpoints for Food Logging and listing
-    path("food-log/", UserFoodLogView.as_view(), name="food-log"),
+    path("food-log/", UserFoodLogView.as_view(), name="food_log"),
     path("list-foods/", ListFoodsView.as_view(), name="list_foods"),
 
     # Endpoints for searching foods and recipes
@@ -27,7 +27,7 @@ urlpatterns = [
 
     # Endpoints for Personalized workout and diet plan
     path(
-        "personal-workout-plan/", PersonalWorkoutPlanView.as_view(), name="workout-plan"
+        "personal-workout-plan/", PersonalWorkoutPlanView.as_view(), name="workout_plan"
     ), 
-    path("personal-diet-plan/", PersonalDietPlanView.as_view(), name="diet-plan"),
+    path("personal-diet-plan/", PersonalDietPlanView.as_view(), name="diet_plan"),
 ]

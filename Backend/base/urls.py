@@ -10,7 +10,7 @@ schema_view = get_schema_view(
       default_version='v1',
       description="API documentation for the Fitness Tracker application",
       terms_of_service="https://www.google.com/policies/terms/",
-      contact=openapi.Contact(email="support@fitnesstracker.com"),
+      contact=openapi.Contact(email="pavankumar.v1301@gmail.com"),
       license=openapi.License(name="MIT License"),
    ),
    public=True,
@@ -20,11 +20,11 @@ schema_view = get_schema_view(
 urlpatterns = [
     path('admin/', admin.site.urls),
     # Endpoint for myfitapp
-    path('', include('myfitapp.urls')),
+    path('api/', include('myfitapp.urls')),
     # Endpoint for authentication
     path('auth/', include('authentication.urls')),
     # API documentation
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='swagger-schema'),
-    path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='redoc-schema'),
+    path('', schema_view.with_ui('redoc', cache_timeout=0), name='redoc-schema'),
 
 ]

@@ -8,6 +8,19 @@
   box-sizing: border-box;
 }
 
+@layer base {
+  input:-webkit-autofill {
+    background-color: #1f2937 !important; 
+    color: #e5e7eb !important;
+  }
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    background-color: #1f2937 !important;
+    color: #e5e7eb !important;
+  }
+}
+
 body {
   color: white;
   width: 100dvw;

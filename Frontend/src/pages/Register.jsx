@@ -91,6 +91,7 @@ const Register = () => {
               value={formData.username}
               onChange={handleChange}
               required
+              autocomplete="off"
               maxLength="150"
               className="mt-1 block w-full px-4 py-2 bg-gray-800 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
             />
@@ -108,7 +109,7 @@ const Register = () => {
               name="email"
               value={formData.email}
               onChange={handleChange}
-              required
+              autocomplete="off"
               className="mt-1 block w-full px-4 py-2 bg-gray-800 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
             />
           </div>
@@ -141,6 +142,7 @@ const Register = () => {
               id="first_name"
               name="first_name"
               value={formData.first_name}
+              autocomplete="off"
               onChange={handleChange}
               className="mt-1 block w-full px-4 py-2 bg-gray-800 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
             />
@@ -157,6 +159,7 @@ const Register = () => {
               id="last_name"
               name="last_name"
               value={formData.last_name}
+              autocomplete="off"
               onChange={handleChange}
               className="mt-1 block w-full px-4 py-2 bg-gray-800 border border-gray-600 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
             />

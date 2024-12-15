@@ -1,6 +1,9 @@
+# python
+
+env/
 *.pyc
-__pycache__
+__pycache__/
 /env
 *.env
 .vscode
-/migrations
+00*.py

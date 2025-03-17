@@ -24,7 +24,5 @@ urlpatterns = [
     # Endpoint for authentication
     path('auth/', include('authentication.urls')),
     # API documentation
-    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='swagger-schema'),
-    path('', schema_view.with_ui('redoc', cache_timeout=0), name='redoc-schema'),
-
+    path('', schema_view.with_ui('swagger', cache_timeout=0), name='swagger-schema'),
 ]

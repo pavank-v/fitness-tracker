@@ -12,7 +12,7 @@ SECRET_KEY = 'django-insecure-n+dts5x^9ioucrjo$gangqlpp-+^axcgg2^lbgo@hs2nj8dei$
 
 DEBUG = True
 
-ALLOWED_HOSTS = [] # To allow any host
+ALLOWED_HOSTS = ['*'] # To allow any host
 
 
 # Application definition
@@ -39,7 +39,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
 ]
 
 ROOT_URLCONF = 'base.urls'
@@ -131,7 +132,7 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
 }
 
-# for cors headers (for React integration in the future)
+  
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOWS_CREDENTIALS = True
 

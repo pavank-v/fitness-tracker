@@ -42,6 +42,7 @@ def calories_finder(food_name, quantity):
     query = f"{quantity} grams of {food_name}"
 
     response = requests.get(api_url + query, headers={"X-Api-Key": api_key})
+    print(response)
 
     if response.status_code == requests.codes.ok:
         data = json.loads(response.text)

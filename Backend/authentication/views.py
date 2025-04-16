@@ -1,4 +1,3 @@
-from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.generics import GenericAPIView
 from rest_framework import status, mixins
@@ -28,6 +27,7 @@ class UserRegisterView(
             return [IsAuthenticated()]
         return super().get_permissions()
 
+
     def create(self, request, *args, **kwargs):
         response = super().create(request, *args, **kwargs)
 
@@ -42,6 +42,10 @@ class UserRegisterView(
     def post(self, request, *args, **kwargs):
         response = self.create(request, *args, **kwargs)
         return response
+
+    def get(self, request, *args, **kwargs):
+        serializer = UserSerializer(self.request.user)
+        return Response(serializer.data)
 
     def get_object(self):
         profile, created = Profile.objects.get_or_create(user=self.request.user)

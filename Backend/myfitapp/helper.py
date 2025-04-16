@@ -1,5 +1,4 @@
 from django.utils import timezone
-
 from myfitapp.models import UserFoodLog, PersonalDietPlan
 
 

@@ -30,11 +30,11 @@ class SearchFoodView(APIView):
     like calories, fats, protein, sugars, sodium things like that,
     about the food
     """
-
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
         input_serializer = SearchSerializer(data=request.data)
+        print(request.data)
         if input_serializer.is_valid():
             food_name = input_serializer.validated_data["food_name"].title()
             quantity = input_serializer.validated_data["quantity"]
@@ -111,7 +111,7 @@ class UserFoodLogView(APIView):
             return Response(
                 {
                     "daily_summary": summary,
-                    "food-log": input_serializer.data,
+                    "food_log": input_serializer.data,
                 },
                 status=status.HTTP_201_CREATED,
             )
@@ -135,7 +135,7 @@ class UserFoodLogView(APIView):
         return Response(
             {
                 "daily_summary": summary,
-                "food-log": serializer.data,
+                "food_log": serializer.data,
             },
             status=status.HTTP_200_OK,
         )

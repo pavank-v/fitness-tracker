@@ -1,0 +1,1 @@
+self.__REACT_LOADABLE_MANIFEST="{\n  \"app/home/page.tsx -> @/components/ProtectedRoute\": {\n    \"id\": \"app/home/page.tsx -> @/components/ProtectedRoute\",\n    \"files\": [\n      \"static/chunks/node_modules_373317._.js\",\n      \"static/chunks/_50ea1f._.js\",\n      \"static/chunks/components_ProtectedRoute_tsx_454d32._.js\"\n    ]\n  }\n}"

@@ -1,0 +1,10 @@
+{
+  "app/home/dashboard/page.tsx -> @/components/ProtectedRoute": {
+    "id": "app/home/dashboard/page.tsx -> @/components/ProtectedRoute",
+    "files": [
+      "static/chunks/node_modules_373317._.js",
+      "static/chunks/_50ea1f._.js",
+      "static/chunks/components_ProtectedRoute_tsx_454d32._.js"
+    ]
+  }
+}

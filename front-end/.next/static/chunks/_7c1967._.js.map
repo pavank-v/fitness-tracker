@@ -1,0 +1,9 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 7, "column": 0}, "map": {"version":3,"sources":["file:///home/pavan-kumar/pavan/dummy/front-end/app/auth/logout/page.tsx"],"sourcesContent":["\"use client\"\n\nimport { useRouter } from \"next/navigation\";\nimport { useEffect } from \"react\";\n\n\nconst Logout = () => {\n  const router = useRouter();\n\n  useEffect(() => {\n    localStorage.clear();\n    router.push(\"/auth/login\");\n  }, [router])\n\n  return null;  \n}\n\nexport default Logout\n"],"names":[],"mappings":";;;AAEA;AACA;;AAHA;;;AAMA,MAAM,SAAS;;IACb,MAAM,SAAS,CAAA,GAAA,qIAAA,CAAA,YAAS,AAAD;IAEvB,CAAA,GAAA,6JAAA,CAAA,YAAS,AAAD;4BAAE;YACR,aAAa,KAAK;YAClB,OAAO,IAAI,CAAC;QACd;2BAAG;QAAC;KAAO;IAEX,OAAO;AACT;GATM;;QACW,qIAAA,CAAA,YAAS;;;KADpB;uCAWS"}},
+    {"offset": {"line": 41, "column": 0}, "map": {"version":3,"sources":[],"names":[],"mappings":"A"}},
+    {"offset": {"line": 51, "column": 0}, "map": {"version":3,"sources":["file:///home/pavan-kumar/pavan/dummy/front-end/node_modules/next/navigation.js"],"sourcesContent":["module.exports = require('./dist/client/components/navigation')\n"],"names":[],"mappings":"AAAA,OAAO,OAAO","ignoreList":[0]}},
+    {"offset": {"line": 52, "column": 0}, "map": {"version":3,"sources":[],"names":[],"mappings":"A"}}]
+}

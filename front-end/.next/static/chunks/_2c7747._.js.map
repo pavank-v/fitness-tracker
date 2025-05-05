@@ -1,0 +1,11 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 7, "column": 0}, "map": {"version":3,"sources":["file:///home/pavan-kumar/pavan/others/front-end/lib/constant.ts"],"sourcesContent":["export const ACCESS_TOKEN: string = 'access';\nexport const REFRESH_TOKEN: string = 'refresh';"],"names":[],"mappings":";;;;AAAO,MAAM,eAAuB;AAC7B,MAAM,gBAAwB"}},
+    {"offset": {"line": 16, "column": 0}, "map": {"version":3,"sources":[],"names":[],"mappings":"A"}},
+    {"offset": {"line": 22, "column": 0}, "map": {"version":3,"sources":["file:///home/pavan-kumar/pavan/others/front-end/app/auth/logout/page.tsx"],"sourcesContent":["\"use client\"\n\nimport { ACCESS_TOKEN } from \"@/lib/constant\";\nimport { useRouter } from \"next/navigation\";\nimport { useEffect } from \"react\";\n\n\nconst Logout = () => {\n  const router = useRouter();\n\n  useEffect(() => {\n    if (localStorage.getItem(ACCESS_TOKEN)) {\n      console.log(\"Logging out...\");\n      localStorage.clear();\n      router.push(\"/auth/login\");\n    }\n  }, [router])\n\n  return null;\n}\n\nexport default Logout\n"],"names":[],"mappings":";;;AAEA;AACA;AACA;;AAJA;;;;AAOA,MAAM,SAAS;;IACb,MAAM,SAAS,CAAA,GAAA,qIAAA,CAAA,YAAS,AAAD;IAEvB,CAAA,GAAA,6JAAA,CAAA,YAAS,AAAD;4BAAE;YACR,IAAI,aAAa,OAAO,CAAC,kHAAA,CAAA,eAAY,GAAG;gBACtC,QAAQ,GAAG,CAAC;gBACZ,aAAa,KAAK;gBAClB,OAAO,IAAI,CAAC;YACd;QACF;2BAAG;QAAC;KAAO;IAEX,OAAO;AACT;GAZM;;QACW,qIAAA,CAAA,YAAS;;;KADpB;uCAcS"}},
+    {"offset": {"line": 61, "column": 0}, "map": {"version":3,"sources":[],"names":[],"mappings":"A"}},
+    {"offset": {"line": 71, "column": 0}, "map": {"version":3,"sources":["file:///home/pavan-kumar/pavan/others/front-end/node_modules/next/navigation.js"],"sourcesContent":["module.exports = require('./dist/client/components/navigation')\n"],"names":[],"mappings":"AAAA,OAAO,OAAO","ignoreList":[0]}},
+    {"offset": {"line": 72, "column": 0}, "map": {"version":3,"sources":[],"names":[],"mappings":"A"}}]
+}

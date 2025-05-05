@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 39, "column": 0}, "map": {"version":3,"sources":["file:///home/pavan-kumar/pavan/dummy/front-end/app/auth/logout/page.tsx"],"sourcesContent":["\"use client\"\n\nimport { useRouter } from \"next/router\";\nimport { useEffect } from \"react\";\n\n\nconst Logout = () => {\n  const router = useRouter();\n\n  useEffect(() => {\n    localStorage.clear();\n    router.push(\"auth/login\");\n  }, [router])\n\n  return null;  \n}\n\nexport default Logout\n"],"names":[],"mappings":";;;AAEA;AACA;AAHA;;;AAMA,MAAM,SAAS;IACb,MAAM,SAAS,CAAA,GAAA,8HAAA,CAAA,YAAS,AAAD;IAEvB,CAAA,GAAA,qMAAA,CAAA,YAAS,AAAD,EAAE;QACR,aAAa,KAAK;QAClB,OAAO,IAAI,CAAC;IACd,GAAG;QAAC;KAAO;IAEX,OAAO;AACT;uCAEe"}},
+    {"offset": {"line": 58, "column": 0}, "map": {"version":3,"sources":[],"names":[],"mappings":"A"}}]
+}

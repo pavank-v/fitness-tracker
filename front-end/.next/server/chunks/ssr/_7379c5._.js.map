@@ -1,0 +1,9 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 7, "column": 0}, "map": {"version":3,"sources":["file:///home/pavan-kumar/pavan/dummy/front-end/components/AuthHeader.tsx"],"sourcesContent":["import React from 'react'\n\nconst AuthHeader = () => {\n  return (\n    <div>\n      \n    </div>\n  )\n}\n\nexport default AuthHeader\n"],"names":[],"mappings":";;;;;AAEA,MAAM,aAAa;IACjB,qBACE,8OAAC;;;;;AAIL;uCAEe"}},
+    {"offset": {"line": 20, "column": 0}, "map": {"version":3,"sources":[],"names":[],"mappings":"A"}},
+    {"offset": {"line": 26, "column": 0}, "map": {"version":3,"sources":["file:///home/pavan-kumar/pavan/dummy/front-end/app/home/layout.tsx"],"sourcesContent":["import \".././globals.css\";\nimport Header from \"@/components/AuthHeader\"\n\n\nexport default function RootLayout({\n  children,\n}: Readonly<{\n  children: React.ReactNode;\n}>) {\n  return (\n      <div>\n        <Header />\n        {children}\n      </div>\n  );\n}"],"names":[],"mappings":";;;;AACA;;;;AAGe,SAAS,WAAW,EACjC,QAAQ,EAGR;IACA,qBACI,8OAAC;;0BACC,8OAAC,yHAAA,CAAA,UAAM;;;;;YACN;;;;;;;AAGT"}},
+    {"offset": {"line": 50, "column": 0}, "map": {"version":3,"sources":[],"names":[],"mappings":"A"}}]
+}

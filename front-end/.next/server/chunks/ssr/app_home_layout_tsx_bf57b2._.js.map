@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 7, "column": 0}, "map": {"version":3,"sources":["file:///home/pavan-kumar/pavan/dummy/front-end/app/home/layout.tsx"],"sourcesContent":["import \".././globals.css\";\nimport AuthHeader from \"@/components/AuthHeader\"\n\n\nexport default function RootLayout({\n  children,\n}: Readonly<{\n  children: React.ReactNode;\n}>) {\n  return (\n      <div>\n        <Header />\n        {children}\n      </div>\n  );\n}"],"names":[],"mappings":";;;;;;AAIe,SAAS,WAAW,EACjC,QAAQ,EAGR;IACA,qBACI,8OAAC;;0BACC,8OAAC;;;;;YACA;;;;;;;AAGT"}},
+    {"offset": {"line": 29, "column": 0}, "map": {"version":3,"sources":[],"names":[],"mappings":"A"}}]
+}

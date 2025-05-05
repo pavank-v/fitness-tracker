@@ -1,6 +1,6 @@
 # Fitness Application
 
-Welcome to the Fitness Application! This project is designed to help users track their fitness journey, including workouts, nutrition, and overall progress. The application is built with Django as the backend and React for the frontend (planned integration). The project is currently under development with features being added incrementally.
+Welcome to the Fitness Application! This project is designed to help users track their fitness journey, including workouts, nutrition, and overall progress. The application is built with Django as the backend and Next.js for the fontend. The project is currently under development with features being added incrementally.
 
 ---
 
@@ -13,7 +13,7 @@ Welcome to the Fitness Application! This project is designed to help users track
 - **Preloaded Workouts**: Users can access predefined workouts categorized into resistance and cardio.
 - **Personalized Plans**: Assign personalized workout plans to users based on their fitness level.
 
-### 2. Food Logging (Under Development)
+### 2. Food Logging
 - **Calorie Tracking**: Log consumed calories and dynamically update the user's calorie budget.
 - **Meal Records**: Record daily meals to track nutritional intake.
 

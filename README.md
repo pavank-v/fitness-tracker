@@ -26,16 +26,14 @@ Welcome to the Fitness Application! This project is designed to help users track
 - **JWT Authentication**: Secure user authentication and session management.
 
 ### Frontend
-- **React (Planned)**: For a modern and interactive user interface.
-- **Axios**: To handle network requests (integrated in the boilerplate).
-
+- **Next.js**: For a modern and interactive user interface.
 ---
 
 ## Setup Instructions
 
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/your-repo/fitness-app.git
+   git clone https://github.com/pavank-v/fitness-tracker.git
    ```
 
 2. **Install Dependencies**:
@@ -56,11 +54,11 @@ Welcome to the Fitness Application! This project is designed to help users track
      ```
    - Start the React development server (if applicable):
      ```bash
-     npm start
+     npm run dev
      ```
 
 4. **Access the Application**:
-   Open your browser and navigate to `http://localhost:8000`.
+   Open your browser and navigate to `http://localhost:3000`.
 
 ---
 

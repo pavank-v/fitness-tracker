@@ -4,6 +4,9 @@ Welcome to the Fitness Application! This project is designed to help users track
 
 ---
 
+## Preview
+![Screenshot from 2025-05-04 16-04-34](https://github.com/user-attachments/assets/cce680ad-3537-4215-bb71-d9432bfbe596)
+
 ## Features
 
 ### 1. Workout Tracking
